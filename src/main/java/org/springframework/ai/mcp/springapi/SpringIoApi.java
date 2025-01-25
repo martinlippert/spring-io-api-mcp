@@ -15,9 +15,14 @@
 */
 package org.springframework.ai.mcp.springapi;
 
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.hateoas.MediaTypes;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+
+import java.time.LocalDate;
+import java.util.List;
 
 /**
  * @author Martin Lippert
@@ -25,10 +30,12 @@ import org.springframework.web.client.RestClient;
 @Component
 public class SpringIoApi {
 
-	private RestClient restClient;
+	private final RestClient apiClient;
+	private final RestClient calClient;
 
-	public SpringIoApi(RestClient.Builder restClientBuilder) {
-		this.restClient = restClientBuilder.baseUrl("https://api.spring.io").build();
+	public SpringIoApi() {
+		this.apiClient = RestClient.builder().baseUrl("https://api.spring.io").build();
+		this.calClient = RestClient.builder().baseUrl("https://calendar.spring.io").build();
 	}
 
 	public record ReleasesRoot(ReleasesEmbedded _embedded) {}
@@ -39,9 +46,11 @@ public class SpringIoApi {
 	public record GenerationsEmbedded(Generation[] generations) {}
 	public record Generation(String name, String initialReleaseDate, String ossSupportEndDate, String commercialSupportEndDate) {}
 
+	public record UpcomingRelease(boolean allDay, String backgroundColor, LocalDate start, String title, String url) {}
+
 	public Release[] getReleases(String project) {
-		ReleasesRoot release = restClient.get()
-			.uri("https://api.spring.io/projects/" + project + "/releases")
+		ReleasesRoot release = apiClient.get()
+			.uri(uriBuilder -> uriBuilder.path("/projects/" + project + "/releases").build())
 			.accept(MediaTypes.HAL_JSON)
 			.retrieve()
 			.body(ReleasesRoot.class);
@@ -50,8 +59,8 @@ public class SpringIoApi {
 	}
 
 	public Generation[] getGenerations(String project) {
-		GenerationsRoot release = restClient.get()
-			.uri("https://api.spring.io/projects/" + project + "/generations")
+		GenerationsRoot release = apiClient.get()
+			.uri(uriBuilder -> uriBuilder.path("/projects/" + project + "/generations").build())
 			.accept(MediaTypes.HAL_JSON)
 			.retrieve()
 			.body(GenerationsRoot.class);
@@ -59,10 +68,26 @@ public class SpringIoApi {
 		return release._embedded.generations;
 	}
 
+	public List<UpcomingRelease> getUpcomingReleases() {
+		LocalDate start = LocalDate.now();
+		LocalDate end = start.plusDays(90L);
+
+		return calClient.get()
+				.uri(uriBuilder -> uriBuilder
+						.path("/releases")
+						.queryParam("start", start)
+						.queryParam("end", end)
+						.build())
+				.accept(MediaType.APPLICATION_JSON)
+				.retrieve()
+				.body(new ParameterizedTypeReference<List<UpcomingRelease>>() {});
+	}
+
 	public static void main(String[] args) {
-		SpringIoApi springApi = new SpringIoApi(RestClient.builder());
+		SpringIoApi springApi = new SpringIoApi();
 		springApi.getReleases("spring-boot");
 		springApi.getGenerations("spring-boot");
+		springApi.getUpcomingReleases();
 	}
 
 }

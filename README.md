@@ -20,6 +20,8 @@ Add the configuration to the MCP server configs (e.g. in Cline when using VSCode
         "-Dtransport.mode=stdio",
         "-Dspring.main.web-application-type=none",
         "-Dlogging.file.name=/spring-io-api-mcp.log",
+         "-Dtransport.mode=stdio",
+        "-Dspring.main.web-application-type=none",
         "-jar",
         "<path-to-project>/target/spring-io-api-mcp-0.0.1-SNAPSHOT.jar"
       ]
@@ -29,7 +31,7 @@ Add the configuration to the MCP server configs (e.g. in Cline when using VSCode
 
 ## Example prompts
 
-The MCP server serves infornmation about Spring project releases and support generations, so
+The MCP server serves information about Spring project releases and support generations, so
 you can ask questions like:
 
 `Which versions of the spring-boot project got released?`
@@ -46,3 +48,6 @@ or
 
 `Until when is spring-boot 2.7.x supported in the open-source?`
 
+or
+
+`Can you tell me if spring-data-core will have an updated release within the next 90 days`
