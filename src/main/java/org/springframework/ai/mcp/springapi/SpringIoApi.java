@@ -15,6 +15,7 @@
 */
 package org.springframework.ai.mcp.springapi;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.MediaType;
@@ -32,10 +33,12 @@ public class SpringIoApi {
 
 	private final RestClient apiClient;
 	private final RestClient calClient;
+	private final Long daysFromToday;
 
-	public SpringIoApi() {
+	public SpringIoApi(@Value("${calendar.window.days:180L}") Long daysFromToday) {
 		this.apiClient = RestClient.builder().baseUrl("https://api.spring.io").build();
 		this.calClient = RestClient.builder().baseUrl("https://calendar.spring.io").build();
+		this.daysFromToday = daysFromToday;
 	}
 
 	public record ReleasesRoot(ReleasesEmbedded _embedded) {}
@@ -70,7 +73,7 @@ public class SpringIoApi {
 
 	public List<UpcomingRelease> getUpcomingReleases() {
 		LocalDate start = LocalDate.now();
-		LocalDate end = start.plusDays(90L);
+		LocalDate end = start.plusDays(this.daysFromToday);
 
 		return calClient.get()
 				.uri(uriBuilder -> uriBuilder
@@ -84,7 +87,7 @@ public class SpringIoApi {
 	}
 
 	public static void main(String[] args) {
-		SpringIoApi springApi = new SpringIoApi();
+		SpringIoApi springApi = new SpringIoApi(180L);
 		springApi.getReleases("spring-boot");
 		springApi.getGenerations("spring-boot");
 		springApi.getUpcomingReleases();
