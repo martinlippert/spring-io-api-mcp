@@ -35,7 +35,7 @@ public class SpringIoApi {
 	private final RestClient calClient;
 	private final Long daysFromToday;
 
-	public SpringIoApi(@Value("${calendar.window.days:180L}") Long daysFromToday) {
+	public SpringIoApi(@Value("${calendar.window.days:180}") Long daysFromToday) {
 		this.apiClient = RestClient.builder().baseUrl("https://api.spring.io").build();
 		this.calClient = RestClient.builder().baseUrl("https://calendar.spring.io").build();
 		this.daysFromToday = daysFromToday;
