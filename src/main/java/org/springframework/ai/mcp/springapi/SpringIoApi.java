@@ -15,6 +15,9 @@
 */
 package org.springframework.ai.mcp.springapi;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.hateoas.MediaTypes;
@@ -24,6 +27,7 @@ import org.springframework.web.client.RestClient;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author Martin Lippert
@@ -34,6 +38,8 @@ public class SpringIoApi {
 	private final RestClient apiClient;
 	private final RestClient calClient;
 	private final Long daysFromToday;
+
+	private static final Logger logger = LoggerFactory.getLogger(SpringIoApi.class);
 
 	public SpringIoApi(@Value("${calendar.window.days:180}") Long daysFromToday) {
 		this.apiClient = RestClient.builder().baseUrl("https://api.spring.io").build();
@@ -51,29 +57,35 @@ public class SpringIoApi {
 
 	public record UpcomingRelease(boolean allDay, String backgroundColor, LocalDate start, String title, String url) {}
 
+	@Tool(description = "Get information about Spring project releases")
 	public Release[] getReleases(String project) {
+		logger.info("get Spring project releases for: " + project);
 		ReleasesRoot release = apiClient.get()
 			.uri(uriBuilder -> uriBuilder.path("/projects/" + project + "/releases").build())
 			.accept(MediaTypes.HAL_JSON)
 			.retrieve()
 			.body(ReleasesRoot.class);
 		
-		return release._embedded.releases;
+		return Objects.requireNonNull(release)._embedded.releases;
 	}
 
+	@Tool(description = "Get information about support ranges and dates for Spring projects")
 	public Generation[] getGenerations(String project) {
+		logger.info("get Spring project support dates for: " + project);
 		GenerationsRoot release = apiClient.get()
 			.uri(uriBuilder -> uriBuilder.path("/projects/" + project + "/generations").build())
 			.accept(MediaTypes.HAL_JSON)
 			.retrieve()
 			.body(GenerationsRoot.class);
 		
-		return release._embedded.generations;
+		return Objects.requireNonNull(release)._embedded.generations;
 	}
 
+	@Tool(description = "Get information about upcoming releases for Spring projects in the near future")
 	public List<UpcomingRelease> getUpcomingReleases() {
 		LocalDate start = LocalDate.now();
 		LocalDate end = start.plusDays(this.daysFromToday);
+		logger.info("Get information about upcoming releases for Spring projects in the next " + this.daysFromToday + " days");
 
 		return calClient.get()
 				.uri(uriBuilder -> uriBuilder
@@ -83,14 +95,7 @@ public class SpringIoApi {
 						.build())
 				.accept(MediaType.APPLICATION_JSON)
 				.retrieve()
-				.body(new ParameterizedTypeReference<List<UpcomingRelease>>() {});
+				.body(new ParameterizedTypeReference<>() {
+                });
 	}
-
-	public static void main(String[] args) {
-		SpringIoApi springApi = new SpringIoApi(180L);
-		springApi.getReleases("spring-boot");
-		springApi.getGenerations("spring-boot");
-		springApi.getUpcomingReleases();
-	}
-
 }
