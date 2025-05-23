@@ -15,12 +15,12 @@
  */
 package org.springframework.ai.mcp.springapi;
 
+import java.util.List;
+
+import org.springframework.ai.support.ToolCallbacks;
 import org.springframework.ai.tool.ToolCallback;
-import org.springframework.ai.tool.ToolCallbacks;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import java.util.List;
 
 /**
  * @author Martin Lippert
