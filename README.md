@@ -18,7 +18,7 @@ Add the configuration to the MCP server configs (e.g. in Cline when using VSCode
       "command": "java",
       "args": [
         "-jar",
-        "<path-to-project>/target/spring-io-api-mcp-0.0.1-SNAPSHOT.jar"
+        "<path-to-project>/target/spring-io-api-mcp-0.0.2-SNAPSHOT.jar"
       ]
     }
 
